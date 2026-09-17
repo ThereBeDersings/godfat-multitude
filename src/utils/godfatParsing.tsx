@@ -21,19 +21,27 @@ export type CatCell = {
 const getColorFromClass = (className: string): string => {
   const COLOR_MAP = {
     rare: "white",
-    owned: "azure",
+    owned: "lightcyan",
     supa_fest: "yellow",
     supa: "gold",
     uber_fest: "salmon",
     uber: "red",
+    legend_fest: "mediumslateblue",
     exclusive: "aqua",
     found: "lime",
     legend: "darkviolet",
   };
 
+  // Cells no longer carry a bare rarity class (e.g. "uber"). Each cell now
+  // gets a "minor_X" + "major_X" pair (see tacit.css's --minor/--major
+  // split-gradient background). "major_" is this cell's dominant
+  // rarity/status, so key off that instead.
   for (const classNameEntry of className.split(" ")) {
-    if (classNameEntry in COLOR_MAP) {
-      return COLOR_MAP[classNameEntry as keyof typeof COLOR_MAP];
+    if (classNameEntry.startsWith("major_")) {
+      const rarity = classNameEntry.slice("major_".length);
+      if (rarity in COLOR_MAP) {
+        return COLOR_MAP[rarity as keyof typeof COLOR_MAP];
+      }
     }
   }
   return "white";
