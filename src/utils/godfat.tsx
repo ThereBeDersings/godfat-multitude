@@ -64,29 +64,42 @@ const godfatPageUrl = (eventPage: number) => {
 export const useGodfatBanners = () => {
   const [eventPage, setEventPage] = useState(1);
 
+  const fetchBannerPage = async (page: number) => {
+    const response = await fetch(corsUrl(godfatPageUrl(page)));
+    const dataText = await response.text();
+    const dataDom = new DOMParser().parseFromString(dataText, "text/html");
+    return {
+      banners: parseBannersFromHtml(dataDom),
+      hasNextPage: hasNextPage(dataDom),
+    };
+  };
+
   const bannerQuery = useQuery({
     queryKey: ["godfat-banners", eventPage],
-    queryFn: async () => {
-      const response = await fetch(corsUrl(godfatPageUrl(eventPage)));
-      const dataText = await response.text();
-      const dataDom = new DOMParser().parseFromString(dataText, "text/html");
-      return {
-        banners: parseBannersFromHtml(dataDom),
-        hasNextPage: hasNextPage(dataDom),
-      };
-    },
+    queryFn: () => fetchBannerPage(eventPage),
     staleTime: Infinity,
-    // Keeps showing the previous page's data (and keeps the rest of the
-    // app mounted) while the next page loads, instead of resetting to a
-    // loading state on every page change.
     keepPreviousData: true,
   });
 
+  // The server always computes its "default" event relative to page 1,
+  // since we never send event_page on the actual data-fetching request.
+  // We need page 1's banner list specifically here - independent of
+  // whichever page is currently being browsed in the dropdown - for
+  // sanitizeGodfatUrl to correctly tell whether a selection matches that
+  // true default. This is deliberately a separate, permanently-cached
+  // query (it shares a cache entry with the above when eventPage === 1).
+  const canonicalBannerQuery = useQuery({
+    queryKey: ["godfat-banners", 1],
+    queryFn: () => fetchBannerPage(1),
+    staleTime: Infinity,
+  });
+
   return {
-    isLoading: bannerQuery.isLoading,
-    isError: bannerQuery.isError,
+    isLoading: bannerQuery.isLoading || canonicalBannerQuery.isLoading,
+    isError: bannerQuery.isError || canonicalBannerQuery.isError,
     isChangingPage: bannerQuery.isFetching,
     banners: bannerQuery.data?.banners ?? [],
+    canonicalBanners: canonicalBannerQuery.data?.banners ?? [],
     eventPage,
     hasPrevPage: eventPage > 1,
     hasNextPage: bannerQuery.data?.hasNextPage ?? false,
@@ -133,23 +146,26 @@ export const augmentGodfatUrlWithGlobalConfig = ({
 
 export const sanitizeGodfatUrl = ({
   startingUrl,
-  banners,
+  canonicalBanners,
 }: {
   startingUrl: string;
-  banners: BannerSelectOption[];
+  canonicalBanners: BannerSelectOption[];
 }) => {
   const url = new URL(startingUrl);
 
   // Godfat strips params from the URL for default values, see
   // https://gitlab.com/godfat/battle-cats-rolls/-/blob/master/lib/battle-cats-rolls/route.rb?ref_type=heads#L468
+  //
+  // canonicalBanners must always be page 1 of the banner list, regardless
+  // of which page is currently being browsed - see useGodfatBanners.
   const firstNonPlatBanner =
-  banners
-    .flatMap((group) => group.options)
-    .find(
-      (o) =>
-        !o.label.toLowerCase().includes("platinum capsules") &&
-        !o.label.toLowerCase().includes("legend capsules")
-    )?.value || "";
+    canonicalBanners
+      .flatMap((group) => group.options)
+      .find(
+        (o) =>
+          !o.label.toLowerCase().includes("platinum capsules") &&
+          !o.label.toLowerCase().includes("legend capsules")
+      )?.value || "";
 
   const DELETE_VALUES = {
     seed: "0",
@@ -212,10 +228,10 @@ export const sanitizeGodfatUrl = ({
 
 export const urlToRareCatQueryUrl = ({
   url,
-  banners,
+  canonicalBanners,
 }: {
   url: string;
-  banners: BannerSelectOption[];
+  canonicalBanners: BannerSelectOption[];
 }) => {
   // A rare cat query URL is a query with seed=1, details=true, and the event from the original URL.
   const searchParams = new URL(url).searchParams;
@@ -234,6 +250,6 @@ export const urlToRareCatQueryUrl = ({
   }
   return sanitizeGodfatUrl({
     startingUrl: rareCatQueryUrl.toString(),
-    banners,
+    canonicalBanners,
   });
 };
