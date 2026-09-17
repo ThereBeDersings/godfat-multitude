@@ -55,6 +55,12 @@ const Row = styled.div`
 
 export default function ConfigContainer({
   banners,
+  eventPage,
+  hasPrevPage,
+  hasNextPage,
+  isChangingPage,
+  goToPrevPage,
+  goToNextPage,
   setConfigData,
   seed,
   setSeedWithOptionalReload,
@@ -66,6 +72,12 @@ export default function ConfigContainer({
   openPlannedOutputModal,
 }: {
   banners: BannerSelectOption[];
+  eventPage: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  isChangingPage: boolean;
+  goToPrevPage: () => void;
+  goToNextPage: () => void;
   setConfigData: (data: ConfigData) => void;
   seed: string;
   setSeedWithOptionalReload: (seed: string, reload: boolean) => void;
@@ -328,9 +340,31 @@ export default function ConfigContainer({
             </Typography>
           </div>
         </Row>
-        <Row>
+                <Row>
           <Button variant="outlined" onClick={addNewInput}>
             Add new track
+          </Button>
+        </Row>
+        <Row css={{ alignItems: "center" }}>
+          <Typography variant="caption" css={{ color: "rgba(0, 0, 0, 0.6)" }}>
+            Banner list page: {eventPage}
+            {isChangingPage ? " (loading...)" : ""}
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            disabled={!hasPrevPage || isChangingPage}
+            onClick={goToPrevPage}
+          >
+            Previous page
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            disabled={!hasNextPage || isChangingPage}
+            onClick={goToNextPage}
+          >
+            Next page
           </Button>
         </Row>
         {inputs.map(({ key }) => (
