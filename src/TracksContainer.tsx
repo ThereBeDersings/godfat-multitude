@@ -226,7 +226,7 @@ const handleCellSelection = ({
 };
 
 export default function TracksContainer({
-  banners,
+  canonicalBanners,
   configData,
   setSeed,
   selectedCell,
@@ -237,7 +237,7 @@ export default function TracksContainer({
   mode,
   plannedOutputRef,
 }: {
-  banners: BannerSelectOption[];
+  canonicalBanners: BannerSelectOption[];
   configData: ConfigData;
   setSeed: (seed: string) => void;
   selectedCell: string;
@@ -270,7 +270,7 @@ export default function TracksContainer({
     urls.map((url) => {
       const rareCatQueryUrl = urlToRareCatQueryUrl({
         url,
-        banners,
+        canonicalBanners,
       });
       return {
         queryKey: [rareCatQueryUrl],
