@@ -1,5 +1,5 @@
 import { css } from "@emotion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "react-query";
 import { corsUrl } from "./query";
 
@@ -18,13 +18,21 @@ const parseBannersFromHtml = (html: Document): BannerSelectOption[] => {
   if (!eventSelect) return [];
 
   const results = [];
-  for (const optGroup of eventSelect.children) {
-    if ((optGroup as HTMLOptGroupElement).label === "Custom:") {
+  for (const child of eventSelect.children) {
+    // The select also has bare <option> siblings for pagination
+    // ("Previous page...", "Next page...") and occasionally a
+    // "(Select an event here)" placeholder. Only real <optgroup>
+    // elements are actual banner groups.
+    if (child.tagName !== "OPTGROUP") {
+      continue;
+    }
+    const optGroup = child as HTMLOptGroupElement;
+    if (optGroup.label === "Custom:") {
       continue;
     }
 
     results.push({
-      groupLabel: (optGroup as HTMLOptGroupElement).label,
+      groupLabel: optGroup.label,
       options: Array.from(optGroup.children).map((option) => ({
         value: (option as HTMLOptionElement).value,
         label: (option as HTMLOptionElement).text,
@@ -35,34 +43,55 @@ const parseBannersFromHtml = (html: Document): BannerSelectOption[] => {
   return results;
 };
 
-export const useGodfatBanners = () => {
+const hasNextPage = (html: Document): boolean =>
+  html.getElementById("event_select")?.querySelector(
+    'option[value="next_page"]'
+  ) != null;
+
+const godfatPageUrl = (eventPage: number) => {
+  const url = new URL(BASE_GODFAT_URL);
   // 12/03/2024: For some reason corsproxy is caching an old version of
   // the base godfat page. As a temporary workaround, appending a fixed seed
   // of 1 to bust the cache. If issue persists, could consider generating
   // a random fixed seed instead.
-  const BASE_GODFAT_URL_WITH_FIXED_SEED = `${BASE_GODFAT_URL}?seed=1`;
-  const [banners, setBanners] = useState<BannerSelectOption[]>([]);
+  url.searchParams.set("seed", "1");
+  if (eventPage > 1) {
+    url.searchParams.set("event_page", eventPage.toString());
+  }
+  return url.toString();
+};
+
+export const useGodfatBanners = () => {
+  const [eventPage, setEventPage] = useState(1);
+
   const bannerQuery = useQuery({
-    queryKey: [BASE_GODFAT_URL_WITH_FIXED_SEED],
-    queryFn: () => fetch(corsUrl(BASE_GODFAT_URL_WITH_FIXED_SEED)),
+    queryKey: ["godfat-banners", eventPage],
+    queryFn: async () => {
+      const response = await fetch(corsUrl(godfatPageUrl(eventPage)));
+      const dataText = await response.text();
+      const dataDom = new DOMParser().parseFromString(dataText, "text/html");
+      return {
+        banners: parseBannersFromHtml(dataDom),
+        hasNextPage: hasNextPage(dataDom),
+      };
+    },
     staleTime: Infinity,
+    // Keeps showing the previous page's data (and keeps the rest of the
+    // app mounted) while the next page loads, instead of resetting to a
+    // loading state on every page change.
+    keepPreviousData: true,
   });
 
-  useEffect(() => {
-    if (banners.length === 0 && bannerQuery?.data) {
-      (async () => {
-        const dataText = await bannerQuery.data.text();
-        const dataDom = new DOMParser().parseFromString(dataText, "text/html");
-        const parsedBanners = parseBannersFromHtml(dataDom);
-        setBanners(parsedBanners);
-      })();
-    }
-  }, [bannerQuery]);
-
   return {
-    isLoading: bannerQuery.isLoading || banners.length === 0,
-    isError: bannerQuery.isError || banners.length === 0,
-    banners,
+    isLoading: bannerQuery.isLoading,
+    isError: bannerQuery.isError,
+    isChangingPage: bannerQuery.isFetching,
+    banners: bannerQuery.data?.banners ?? [],
+    eventPage,
+    hasPrevPage: eventPage > 1,
+    hasNextPage: bannerQuery.data?.hasNextPage ?? false,
+    goToPrevPage: () => setEventPage((page) => Math.max(1, page - 1)),
+    goToNextPage: () => setEventPage((page) => page + 1),
   };
 };
 
