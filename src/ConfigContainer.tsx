@@ -55,6 +55,7 @@ const Row = styled.div`
 
 export default function ConfigContainer({
   banners,
+  canonicalBanners,
   eventPage,
   hasPrevPage,
   hasNextPage,
@@ -72,6 +73,7 @@ export default function ConfigContainer({
   openPlannedOutputModal,
 }: {
   banners: BannerSelectOption[];
+  canonicalBanners: BannerSelectOption[];
   eventPage: number;
   hasPrevPage: boolean;
   hasNextPage: boolean;
@@ -131,7 +133,7 @@ export default function ConfigContainer({
       });
       const sanitizedUrl = sanitizeGodfatUrl({
         startingUrl: augmentedUrl,
-        banners,
+        canonicalBanners,
       });
       return {
         label: value.label || `Banner ${index + 1}`,
