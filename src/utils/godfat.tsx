@@ -143,7 +143,9 @@ export const sanitizeGodfatUrl = ({
   // Godfat strips params from the URL for default values, see
   // https://gitlab.com/godfat/battle-cats-rolls/-/blob/master/lib/battle-cats-rolls/route.rb?ref_type=heads#L468
   const firstNonPlatBanner =
-    banners[0].options?.find(
+  banners
+    .flatMap((group) => group.options)
+    .find(
       (o) =>
         !o.label.toLowerCase().includes("platinum capsules") &&
         !o.label.toLowerCase().includes("legend capsules")
