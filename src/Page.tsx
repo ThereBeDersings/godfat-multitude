@@ -83,6 +83,7 @@ export default function Page() {
     isError,
     isChangingPage,
     banners,
+    canonicalBanners,
     eventPage,
     hasPrevPage,
     hasNextPage,
@@ -105,8 +106,9 @@ export default function Page() {
         open={plannedOutputModalOpen}
         closePlannedOutputModal={closePlannedOutputModal}
       />
-      <ConfigContainer
+        <ConfigContainer
         banners={banners}
+        canonicalBanners={canonicalBanners}
         eventPage={eventPage}
         hasPrevPage={hasPrevPage}
         hasNextPage={hasNextPage}
@@ -123,11 +125,11 @@ export default function Page() {
         undoPlannedCell={undoPlannedCell}
         openPlannedOutputModal={openPlannedOutputModal}
       />
-      <TracksContainer
+        <TracksContainer
         plannedCells={plannedCells}
         addPlannedCell={addPlannedCell}
         resetPlannedCells={resetPlannedCells}
-        banners={banners}
+        canonicalBanners={canonicalBanners}
         configData={configData}
         selectedCell={selectedCell}
         setSelectedCell={setSelectedCell}
