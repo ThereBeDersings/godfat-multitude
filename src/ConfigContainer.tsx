@@ -55,6 +55,12 @@ const Row = styled.div`
 
 export default function ConfigContainer({
   banners,
+  eventPage,
+  hasPrevPage,
+  hasNextPage,
+  isChangingPage,
+  goToPrevPage,
+  goToNextPage,
   setConfigData,
   seed,
   setSeedWithOptionalReload,
@@ -66,6 +72,12 @@ export default function ConfigContainer({
   openPlannedOutputModal,
 }: {
   banners: BannerSelectOption[];
+  eventPage: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  isChangingPage: boolean;
+  goToPrevPage: () => void;
+  goToNextPage: () => void;
   setConfigData: (data: ConfigData) => void;
   seed: string;
   setSeedWithOptionalReload: (seed: string, reload: boolean) => void;
