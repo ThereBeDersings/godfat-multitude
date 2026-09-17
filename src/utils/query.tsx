@@ -1,2 +1,2 @@
 export const corsUrl = (url: string) =>
-  `https://corsproxy.io/?${encodeURIComponent(url)}`;
+  `https://godfat-multitude.dersing.workers.dev/?url=${encodeURIComponent(url)}`;
