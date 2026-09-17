@@ -78,7 +78,17 @@ export default function Page() {
     bannerData: [],
   });
 
-  const { isLoading, isError, banners } = useGodfatBanners();
+    const {
+    isLoading,
+    isError,
+    isChangingPage,
+    banners,
+    eventPage,
+    hasPrevPage,
+    hasNextPage,
+    goToPrevPage,
+    goToNextPage,
+  } = useGodfatBanners();
 
   if (isLoading) {
     return <Typography variant="h5">Loading banner data...</Typography>;
@@ -97,6 +107,12 @@ export default function Page() {
       />
       <ConfigContainer
         banners={banners}
+        eventPage={eventPage}
+        hasPrevPage={hasPrevPage}
+        hasNextPage={hasNextPage}
+        isChangingPage={isChangingPage}
+        goToPrevPage={goToPrevPage}
+        goToNextPage={goToNextPage}
         setConfigData={setConfigData}
         seed={seed}
         setSeedWithOptionalReload={setSeedWithOptionalReload}
