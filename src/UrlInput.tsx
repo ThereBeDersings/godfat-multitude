@@ -46,21 +46,22 @@ export default function UrlInput({
     `${id}:customName`
   );
 
-    // Creating a new UrlInput will start selectedBanner as the default ("") when it should actually be the first banner.
+  // Creating a new UrlInput will start selectedBanner as the default ("") when it should actually be the first banner.
   // It's annoying to set the first banner as the default since it's dynamic - so we just set it here.
-  // A group can be present but empty (e.g. "Upcoming:" on an older banner
-  // list page with no upcoming events), so find the first group that
-  // actually has an option instead of assuming bannerSelectOptions[0] does.
+  // Note: with banner pagination, bannerSelectOptions[0] isn't guaranteed to
+  // have any options (e.g. "Upcoming:" is empty on a page full of past
+  // events), so find the first group that actually has one instead of
+  // assuming the first group does.
   useEffect(() => {
     if (selectedBanner === "") {
-      const firstOption = bannerSelectOptions.find(
+      const firstAvailableOption = bannerSelectOptions.find(
         (group) => group.options.length > 0
       )?.options[0];
-      if (firstOption) {
-        setSelectedBanner(firstOption.value);
+      if (firstAvailableOption) {
+        setSelectedBanner(firstAvailableOption.value);
       }
     }
-  }, [bannerSelectOptions]);
+  }, []);
 
   useEffect(() => {
     if (inputType === "input") {
